@@ -16,6 +16,7 @@ import { transactionsRouter } from './routes/transactions';
 import { invoicesRouter } from './routes/invoices';
 import { subscriptionRouter } from './routes/subscription';
 import { webhooksRouter } from './routes/webhooks';
+import { usersRouter } from './routes/users';
 
 export function createApp(): express.Application {
   const app = express();
@@ -69,6 +70,7 @@ export function createApp(): express.Application {
   app.use('/v1/transactions', transactionsRouter);
   app.use('/v1/invoices', invoicesRouter);
   app.use('/v1/subscription', subscriptionRouter);
+  app.use('/v1/users', usersRouter);
 
   // ─── Health Check ─────────────────────────────────────────────────────────
   app.get('/health', (_req, res) => {

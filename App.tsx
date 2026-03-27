@@ -9,6 +9,9 @@ import { StyleSheet } from 'react-native';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { paperTheme } from './src/theme';
 import { useStore } from './src/store/useStore';
+import { initSentry } from './src/services/sentry';
+
+initSentry();
 
 export default function App() {
   const initializeApp = useStore((state) => state.initializeApp);
