@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -17,12 +18,27 @@ import { invoicesRouter } from './routes/invoices';
 import { subscriptionRouter } from './routes/subscription';
 import { webhooksRouter } from './routes/webhooks';
 import { usersRouter } from './routes/users';
+import { estimatorRouter } from './routes/estimator';
 
 export function createApp(): express.Application {
   const app = express();
 
+  // ─── Static files (estimator web UI) ──────────────────────────────────────
+  app.use(express.static(path.join(__dirname, '..', 'public')));
+
   // ─── Security Headers ──────────────────────────────────────────────────────
-  app.use(helmet());
+  // Allow inline scripts/styles for the self-contained estimator HTML
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        connectSrc: ["'self'"],
+      },
+    },
+  }));
 
   // ─── CORS ─────────────────────────────────────────────────────────────────
   app.use(cors({
@@ -34,7 +50,7 @@ export function createApp(): express.Application {
   app.use('/v1/webhooks', express.raw({ type: 'application/json' }), webhooksRouter);
 
   // ─── Body Parsing ─────────────────────────────────────────────────────────
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '10mb' })); // larger limit for document submissions
   app.use(compression());
 
   // ─── Logging ──────────────────────────────────────────────────────────────
@@ -65,6 +81,7 @@ export function createApp(): express.Application {
 
   // ─── Routes ───────────────────────────────────────────────────────────────
   app.use('/v1/auth', authRouter);
+  app.use('/v1/estimate', estimatorRouter);
   app.use('/v1/plaid', plaidRouter);
   app.use('/v1/accounts', accountsRouter);
   app.use('/v1/transactions', transactionsRouter);

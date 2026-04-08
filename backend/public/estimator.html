@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contracting Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #0f1117;
+  --surface:  #1a1d27;
+  --surface2: #22263a;
+  --border:   #2e3347;
+  --accent:   #4f6ef7;
+  --accent2:  #7c3aed;
+  --green:    #22c55e;
+  --yellow:   #eab308;
+  --red:      #ef4444;
+  --text:     #e8eaf0;
+  --text2:    #8b90a8;
+  --radius:   12px;
+  --shadow:   0 4px 24px rgba(0,0,0,.4);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 0 0 4rem;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.logo-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+header h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
+header p  { font-size: .8rem; color: var(--text2); }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.card-title {
+  font-size: .8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text2);
+  margin-bottom: 1rem;
+}
+
+/* ── Doc type toggle ─────────────────────────────────────────────────────── */
+.doc-toggle {
+  display: flex;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  width: fit-content;
+  margin-bottom: 1rem;
+}
+.doc-toggle label {
+  cursor: pointer;
+  padding: .45rem 1.1rem;
+  border-radius: 6px;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--text2);
+  transition: all .15s;
+  user-select: none;
+}
+.doc-toggle input { display: none; }
+.doc-toggle input:checked + label {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────────────── */
+.field { margin-bottom: .9rem; }
+.field label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--text2);
+  margin-bottom: .35rem;
+}
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem .85rem;
+  font-size: .9rem;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color .15s;
+  -webkit-appearance: none;
+}
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus { border-color: var(--accent); }
+textarea {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* ── File drop zone ──────────────────────────────────────────────────────── */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 1.2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  margin-bottom: .9rem;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(79,110,247,.05);
+}
+.drop-zone input[type="file"] {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.drop-zone p { font-size: .82rem; color: var(--text2); pointer-events: none; }
+.drop-zone strong { color: var(--accent); }
+
+/* ── Rate grid ───────────────────────────────────────────────────────────── */
+.rate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+@media (max-width: 480px) { .rate-grid { grid-template-columns: 1fr; } }
+.rate-grid .field { margin-bottom: 0; }
+
+/* ── Collapsible ─────────────────────────────────────────────────────────── */
+.collapsible-trigger {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--text2);
+  padding: .25rem 0;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.collapsible-trigger:hover { color: var(--text); }
+.chevron {
+  margin-left: auto;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.collapsible-trigger[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+.collapsible-body { display: none; padding-top: 1rem; }
+.collapsible-body.open { display: block; }
+
+/* ── Trade overrides table ───────────────────────────────────────────────── */
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+  margin-top: .5rem;
+}
+.trade-table th {
+  text-align: left;
+  color: var(--text2);
+  font-weight: 500;
+  font-size: .75rem;
+  padding: .3rem .4rem;
+  border-bottom: 1px solid var(--border);
+}
+.trade-table td { padding: .3rem .4rem; }
+.trade-table input[type="number"] {
+  padding: .3rem .5rem;
+  font-size: .8rem;
+  min-width: 80px;
+}
+
+/* ── Primary button ──────────────────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: .9rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, transform .1s, opacity .15s;
+  letter-spacing: -.01em;
+}
+.btn-primary:hover:not(:disabled) { background: #3b58e8; }
+.btn-primary:active:not(:disabled) { transform: scale(.98); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary {
+  padding: .55rem 1rem;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: .85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-secondary:hover { background: var(--border); }
+
+/* ── Progress / streaming ────────────────────────────────────────────────── */
+#progress-card { display: none; }
+.progress-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-label { font-size: .9rem; font-weight: 500; }
+.stream-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .75rem;
+  height: 120px;
+  overflow-y: auto;
+  font-size: .75rem;
+  color: var(--text2);
+  font-family: 'Menlo', 'Monaco', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+#results-card { display: none; }
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1rem;
+}
+.results-title { font-size: 1rem; font-weight: 600; }
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: .45rem .9rem;
+  border: none;
+  background: none;
+  color: var(--text2);
+  font-size: .82rem;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.tab-btn.active {
+  background: var(--surface2);
+  color: var(--text);
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── Summary totals ──────────────────────────────────────────────────────── */
+.totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .9rem;
+}
+.totals-table tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+.totals-table td {
+  padding: .6rem .5rem;
+}
+.totals-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.totals-table .total-row td {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--green);
+  padding-top: .8rem;
+}
+
+/* ── Estimate table (labor / material) ───────────────────────────────────── */
+.est-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.est-table th {
+  text-align: left;
+  color: var(--text2);
+  font-weight: 500;
+  font-size: .75rem;
+  padding: .4rem .5rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.est-table td {
+  padding: .5rem .5rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: top;
+}
+.est-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.trade-badge {
+  display: inline-block;
+  padding: .15rem .55rem;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 500;
+  background: rgba(79,110,247,.15);
+  color: #a5b4fc;
+}
+.cat-badge {
+  display: inline-block;
+  padding: .15rem .55rem;
+  border-radius: 99px;
+  font-size: .72rem;
+  font-weight: 500;
+  background: rgba(34,197,94,.12);
+  color: #86efac;
+}
+.subtotal-row td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  padding-top: .75rem;
+}
+
+/* ── Scope + notes ───────────────────────────────────────────────────────── */
+.scope-text {
+  font-size: .9rem;
+  line-height: 1.6;
+  color: var(--text2);
+  margin-bottom: 1rem;
+}
+.notes-section { margin-top: 1rem; }
+.notes-section h4 {
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text2);
+  margin-bottom: .5rem;
+}
+.notes-section ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+.notes-section li {
+  font-size: .83rem;
+  color: var(--text2);
+  padding-left: 1.1rem;
+  position: relative;
+  line-height: 1.4;
+}
+.notes-section li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+.notes-section.clarifications li::before { color: var(--yellow); }
+.notes-section.exclusions li::before { color: var(--red); }
+
+/* ── Proposal tab ────────────────────────────────────────────────────────── */
+.proposal-text {
+  font-size: .87rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  color: var(--text2);
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+@media (max-width: 480px) { .stat-row { grid-template-columns: 1fr 1fr; } }
+.stat {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: .75rem;
+  border: 1px solid var(--border);
+}
+.stat-label { font-size: .72rem; color: var(--text2); font-weight: 500; margin-bottom: .3rem; }
+.stat-value { font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-value.green { color: var(--green); }
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(4rem);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: .65rem 1.25rem;
+  font-size: .85rem;
+  font-weight: 500;
+  transition: transform .25s;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+.error-banner {
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 8px;
+  padding: .85rem 1rem;
+  font-size: .87rem;
+  color: #fca5a5;
+  display: none;
+  margin-top: .75rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M3 15 L7 9 L11 12 L17 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="3" y="16" width="14" height="1.5" rx=".75" fill="white" opacity=".4"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Contracting Estimator</h1>
+    <p>IFB · RFP · RFQ analysis powered by AI</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Input card ──────────────────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">Document</p>
+
+    <div class="doc-toggle">
+      <input type="radio" name="docType" id="dt-ifb" value="IFB" checked>
+      <label for="dt-ifb">IFB</label>
+      <input type="radio" name="docType" id="dt-rfp" value="RFP">
+      <label for="dt-rfp">RFP</label>
+      <input type="radio" name="docType" id="dt-rfq" value="RFQ">
+      <label for="dt-rfq">RFQ</label>
+    </div>
+
+    <div class="field">
+      <label for="projectName">Project name (optional)</label>
+      <input type="text" id="projectName" placeholder="e.g. Riverside Industrial Expansion Phase 2"/>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx"/>
+      <p><strong>Upload a file</strong> or drag and drop here</p>
+      <p style="margin-top:.25rem">.txt files only (extract PDF/Word text first)</p>
+    </div>
+
+    <div class="field">
+      <label for="docText">Or paste document text</label>
+      <textarea id="docText" placeholder="Paste the full text of the IFB, RFP, or RFQ here…&#10;&#10;Include all scope descriptions, technical specifications, bid items, and any attachments relevant to pricing."></textarea>
+    </div>
+
+    <div id="errorBanner" class="error-banner"></div>
+  </div>
+
+  <!-- ── Rate adjustments ────────────────────────────────────────────────── -->
+  <div class="card">
+    <button class="collapsible-trigger" aria-expanded="false" id="ratesToggle">
+      <span>⚙️</span>
+      <span>Rate Adjustments &amp; Multipliers</span>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="collapsible-body" id="ratesBody">
+      <p style="font-size:.8rem;color:var(--text2);margin-bottom:1rem">
+        All values default to national 2024 market averages (RS Means / BLS baselines).
+        Adjust any field to override.
+      </p>
+
+      <div class="rate-grid">
+        <div class="field">
+          <label for="globalLaborMult">Labor multiplier</label>
+          <input type="number" id="globalLaborMult" placeholder="1.0" min=".5" max="3" step=".05"/>
+        </div>
+        <div class="field">
+          <label for="globalMatMult">Material multiplier</label>
+          <input type="number" id="globalMatMult" placeholder="1.0" min=".5" max="3" step=".05"/>
+        </div>
+        <div class="field">
+          <label for="regionalFactor">Regional cost factor</label>
+          <input type="number" id="regionalFactor" placeholder="1.0" min=".5" max="2.5" step=".05"/>
+        </div>
+        <div class="field">
+          <label for="ohProfit">Overhead &amp; profit %</label>
+          <input type="number" id="ohProfit" placeholder="15" min="0" max="60" step=".5"/>
+        </div>
+        <div class="field">
+          <label for="bondPct">Bond &amp; insurance %</label>
+          <input type="number" id="bondPct" placeholder="2" min="0" max="10" step=".25"/>
+        </div>
+      </div>
+
+      <button class="collapsible-trigger" aria-expanded="false" id="tradeToggle"
+              style="margin-top:1rem;border-top:1px solid var(--border);padding-top:.75rem">
+        <span>Per-trade labor rate overrides</span>
+        <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="collapsible-body" id="tradeBody">
+        <p style="font-size:.78rem;color:var(--text2);margin:.5rem 0">
+          Set a specific hourly rate ($/hr) to override the default for that trade, or set a multiplier (e.g. 1.15 = +15%).
+          Leave blank to use defaults.
+        </p>
+        <div style="overflow-x:auto">
+          <table class="trade-table" id="tradeTable">
+            <thead><tr>
+              <th>Trade</th>
+              <th>Default $/hr</th>
+              <th>Override $/hr</th>
+              <th>Multiplier</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Submit ──────────────────────────────────────────────────────────── -->
+  <button class="btn-primary" id="submitBtn">Generate Estimate</button>
+
+  <!-- ── Progress ───────────────────────────────────────────────────────── -->
+  <div class="card" id="progress-card">
+    <div class="progress-header">
+      <div class="spinner"></div>
+      <span class="progress-label" id="progressLabel">Analyzing document…</span>
+    </div>
+    <div class="stream-box" id="streamBox"></div>
+  </div>
+
+  <!-- ── Results ────────────────────────────────────────────────────────── -->
+  <div class="card" id="results-card">
+    <div class="results-header">
+      <div class="results-title" id="resultsTitle">Estimate Results</div>
+      <div class="actions">
+        <button class="btn-secondary" onclick="copyProposal()">Copy Proposal</button>
+        <button class="btn-secondary" onclick="downloadJSON()">Download JSON</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="summary">Summary</button>
+      <button class="tab-btn" data-tab="labor">Labor</button>
+      <button class="tab-btn" data-tab="materials">Materials</button>
+      <button class="tab-btn" data-tab="proposal">Bid Proposal</button>
+    </div>
+
+    <!-- Summary tab -->
+    <div class="tab-pane active" id="tab-summary">
+      <p class="scope-text" id="scopeText"></p>
+      <div class="stat-row" id="statRow"></div>
+      <table class="totals-table" id="totalsTable"></table>
+      <div id="notesSections"></div>
+    </div>
+
+    <!-- Labor tab -->
+    <div class="tab-pane" id="tab-labor">
+      <div style="overflow-x:auto">
+        <table class="est-table" id="laborTable">
+          <thead><tr>
+            <th>Trade</th>
+            <th>Description</th>
+            <th class="num">Hours</th>
+            <th class="num">Rate/hr</th>
+            <th class="num">Total</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Materials tab -->
+    <div class="tab-pane" id="tab-materials">
+      <div style="overflow-x:auto">
+        <table class="est-table" id="materialsTable">
+          <thead><tr>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="num">Qty</th>
+            <th>Unit</th>
+            <th class="num">Unit $</th>
+            <th class="num">Total</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Proposal tab -->
+    <div class="tab-pane" id="tab-proposal">
+      <pre class="proposal-text" id="proposalText"></pre>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const TRADES = [
+  { key: 'general',          label: 'General Laborer',    default: 52 },
+  { key: 'electrical',       label: 'Electrical',         default: 89 },
+  { key: 'plumbing',         label: 'Plumbing',           default: 87 },
+  { key: 'hvac',             label: 'HVAC',               default: 82 },
+  { key: 'concrete',         label: 'Concrete',           default: 68 },
+  { key: 'structural_steel', label: 'Structural Steel',   default: 95 },
+  { key: 'carpentry',        label: 'Carpentry',          default: 72 },
+  { key: 'masonry',          label: 'Masonry',            default: 75 },
+  { key: 'painting',         label: 'Painting',           default: 58 },
+  { key: 'insulation',       label: 'Insulation',         default: 62 },
+  { key: 'roofing',          label: 'Roofing',            default: 70 },
+  { key: 'site_work',        label: 'Site Work',          default: 65 },
+];
+
+let lastResult = null;
+
+// ── Build trade table ─────────────────────────────────────────────────────────
+
+(function buildTradeTable() {
+  const tbody = document.querySelector('#tradeTable tbody');
+  TRADES.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${t.label}</td>
+      <td style="color:var(--text2)">$${t.default}</td>
+      <td><input type="number" id="tr_rate_${t.key}" placeholder="${t.default}" min="20" max="300" step="1"/></td>
+      <td><input type="number" id="tr_mult_${t.key}" placeholder="1.0" min="0.5" max="3" step="0.05"/></td>
+    `;
+    tbody.appendChild(tr);
+  });
+})();
+
+// ── Collapsibles ──────────────────────────────────────────────────────────────
+
+function initCollapsible(triggerEl, bodyEl) {
+  triggerEl.addEventListener('click', () => {
+    const expanded = triggerEl.getAttribute('aria-expanded') === 'true';
+    triggerEl.setAttribute('aria-expanded', !expanded);
+    bodyEl.classList.toggle('open', !expanded);
+  });
+}
+initCollapsible(document.getElementById('ratesToggle'), document.getElementById('ratesBody'));
+initCollapsible(document.getElementById('tradeToggle'), document.getElementById('tradeBody'));
+
+// ── File upload ───────────────────────────────────────────────────────────────
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const docText  = document.getElementById('docText');
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) readFile(file);
+});
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => { docText.value = ev.target.result; };
+  reader.readAsText(file);
+}
+
+// ── Auto-detect document type ─────────────────────────────────────────────────
+
+docText.addEventListener('input', () => {
+  const t = docText.value.toUpperCase();
+  if (t.includes('INVITATION FOR BID') || (t.includes(' IFB') && !t.includes('RFP') && !t.includes('RFQ'))) {
+    document.getElementById('dt-ifb').checked = true;
+  } else if (t.includes('REQUEST FOR PROPOSAL') || t.includes(' RFP ')) {
+    document.getElementById('dt-rfp').checked = true;
+  } else if (t.includes('REQUEST FOR QUOTATION') || t.includes(' RFQ ')) {
+    document.getElementById('dt-rfq').checked = true;
+  }
+});
+
+// ── Build request payload ─────────────────────────────────────────────────────
+
+function buildPayload() {
+  const text = docText.value.trim();
+  if (!text) return null;
+
+  const docType = document.querySelector('input[name="docType"]:checked').value;
+  const projectName = document.getElementById('projectName').value.trim() || undefined;
+
+  const adj = {};
+  const n = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? undefined : v; };
+
+  if (n('globalLaborMult'))  adj.globalLaborMultiplier    = n('globalLaborMult');
+  if (n('globalMatMult'))    adj.globalMaterialMultiplier = n('globalMatMult');
+  if (n('regionalFactor'))   adj.regionalFactor           = n('regionalFactor');
+  if (n('ohProfit'))         adj.overheadAndProfitPercent = n('ohProfit');
+  if (n('bondPct'))          adj.bondInsurancePercent     = n('bondPct');
+
+  const tradeOverrides = {};
+  TRADES.forEach(t => {
+    const rate = n(`tr_rate_${t.key}`);
+    const mult = n(`tr_mult_${t.key}`);
+    if (rate !== undefined || mult !== undefined) {
+      tradeOverrides[t.key] = {};
+      if (rate !== undefined) tradeOverrides[t.key].hourlyRate  = rate;
+      if (mult !== undefined) tradeOverrides[t.key].multiplier  = mult;
+    }
+  });
+  if (Object.keys(tradeOverrides).length) adj.tradeOverrides = tradeOverrides;
+
+  return { documentType: docType, documentText: text, projectName, rateAdjustments: Object.keys(adj).length ? adj : undefined };
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+
+const submitBtn  = document.getElementById('submitBtn');
+const progressCard = document.getElementById('progress-card');
+const resultsCard  = document.getElementById('results-card');
+const progressLabel = document.getElementById('progressLabel');
+const streamBox  = document.getElementById('streamBox');
+const errorBanner = document.getElementById('errorBanner');
+
+submitBtn.addEventListener('click', runEstimate);
+
+async function runEstimate() {
+  const payload = buildPayload();
+  if (!payload) {
+    showError('Please paste or upload a document before generating an estimate.');
+    return;
+  }
+
+  hideError();
+  submitBtn.disabled = true;
+  progressCard.style.display = 'block';
+  resultsCard.style.display  = 'none';
+  streamBox.textContent = '';
+  progressLabel.textContent = 'Analyzing document…';
+  progressCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const stages = [
+    [6000,  'Analyzing scope of work…'],
+    [12000, 'Estimating labor by trade…'],
+    [18000, 'Pricing materials…'],
+    [25000, 'Calculating totals…'],
+    [35000, 'Writing bid proposal…'],
+  ];
+  const stageTimers = stages.map(([ms, label]) =>
+    setTimeout(() => { progressLabel.textContent = label; }, ms)
+  );
+
+  try {
+    const response = await fetch('/v1/estimate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(JSON.stringify(err.error ?? err));
+    }
+
+    const reader = response.body.getReader();
+    const dec    = new TextDecoder();
+    let   buf    = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+
+      // Parse SSE lines
+      const lines = buf.split('\n');
+      buf = lines.pop(); // keep incomplete last line
+
+      let event = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) { event = line.slice(7).trim(); }
+        else if (line.startsWith('data: ')) {
+          const data = JSON.parse(line.slice(6));
+          if (event === 'progress') {
+            streamBox.textContent += data.text;
+            streamBox.scrollTop = streamBox.scrollHeight;
+          } else if (event === 'result') {
+            stageTimers.forEach(clearTimeout);
+            progressCard.style.display = 'none';
+            lastResult = data;
+            renderResults(data);
+          } else if (event === 'error') {
+            throw new Error(data.message);
+          }
+          event = '';
+        }
+      }
+    }
+  } catch (err) {
+    stageTimers.forEach(clearTimeout);
+    progressCard.style.display = 'none';
+    showError('Error: ' + err.message);
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
+// ── Render results ────────────────────────────────────────────────────────────
+
+function usd(n) {
+  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderResults(data) {
+  const b = data.breakdown;
+  const p = data.proposal;
+
+  document.getElementById('resultsTitle').textContent = b.projectName || 'Estimate Results';
+
+  // ─ Scope ─
+  document.getElementById('scopeText').textContent = b.scopeSummary;
+
+  // ─ Stat cards ─
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat"><div class="stat-label">Labor Total</div><div class="stat-value">${usd(b.laborSubtotal)}</div></div>
+    <div class="stat"><div class="stat-label">Material Total</div><div class="stat-value">${usd(b.materialSubtotal)}</div></div>
+    <div class="stat"><div class="stat-label">Total Bid</div><div class="stat-value green">${usd(b.totalBid)}</div></div>
+  `;
+
+  // ─ Totals table ─
+  document.getElementById('totalsTable').innerHTML = `
+    <tr><td>Labor subtotal</td><td>${usd(b.laborSubtotal)}</td></tr>
+    <tr><td>Material subtotal</td><td>${usd(b.materialSubtotal)}</td></tr>
+    <tr><td>Subtotal</td><td>${usd(b.subtotal)}</td></tr>
+    <tr><td>Overhead &amp; Profit (${b.overheadAndProfitPercent}%)</td><td>${usd(b.overheadAndProfit)}</td></tr>
+    <tr><td>Bond &amp; Insurance (${b.bondAndProfitPercent}%)</td><td>${usd(b.bondAndInsurance)}</td></tr>
+    <tr class="total-row"><td>TOTAL BID</td><td>${usd(b.totalBid)}</td></tr>
+  `;
+
+  // ─ Notes ─
+  const notesSec = document.getElementById('notesSections');
+  notesSec.innerHTML = '';
+  const addNotes = (title, items, cls) => {
+    if (!items || !items.length) return;
+    const el = document.createElement('div');
+    el.className = 'notes-section ' + (cls || '');
+    el.innerHTML = `<h4>${title}</h4><ul>${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>`;
+    notesSec.appendChild(el);
+  };
+  addNotes('Assumptions',             b.assumptions,    '');
+  addNotes('Exclusions',              b.exclusions,     'exclusions');
+  addNotes('Clarifications Needed',   b.clarifications, 'clarifications');
+
+  // ─ Labor table ─
+  const lTbody = document.querySelector('#laborTable tbody');
+  const lTfoot = document.querySelector('#laborTable tfoot');
+  lTbody.innerHTML = b.laborItems.map(i => `
+    <tr>
+      <td><span class="trade-badge">${i.trade}</span></td>
+      <td>${escHtml(i.description)}</td>
+      <td class="num">${Number(i.estimatedHours).toLocaleString()}</td>
+      <td class="num">${usd(i.adjustedHourlyRate)}</td>
+      <td class="num">${usd(i.totalCost)}</td>
+    </tr>
+  `).join('');
+  lTfoot.innerHTML = `<tr class="subtotal-row"><td colspan="4" style="font-weight:600">Labor Subtotal</td><td class="num">${usd(b.laborSubtotal)}</td></tr>`;
+
+  // ─ Materials table ─
+  const mTbody = document.querySelector('#materialsTable tbody');
+  const mTfoot = document.querySelector('#materialsTable tfoot');
+  mTbody.innerHTML = b.materialItems.map(i => `
+    <tr>
+      <td><span class="cat-badge">${i.category.replace(/_/g,' ')}</span></td>
+      <td>${escHtml(i.description)}</td>
+      <td class="num">${Number(i.quantity).toLocaleString()}</td>
+      <td>${escHtml(i.unit)}</td>
+      <td class="num">${usd(i.unitCost)}</td>
+      <td class="num">${usd(i.totalCost)}</td>
+    </tr>
+  `).join('');
+  mTfoot.innerHTML = `<tr class="subtotal-row"><td colspan="5" style="font-weight:600">Material Subtotal</td><td class="num">${usd(b.materialSubtotal)}</td></tr>`;
+
+  // ─ Proposal ─
+  document.getElementById('proposalText').textContent = p.proposalText;
+
+  resultsCard.style.display = 'block';
+  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ── Copy / download ───────────────────────────────────────────────────────────
+
+function copyProposal() {
+  const text = document.getElementById('proposalText').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('Proposal copied to clipboard'));
+}
+
+function downloadJSON() {
+  if (!lastResult) return;
+  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'estimate.json';
+  a.click();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function showError(msg) {
+  errorBanner.textContent = msg;
+  errorBanner.style.display = 'block';
+  errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function hideError() { errorBanner.style.display = 'none'; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
